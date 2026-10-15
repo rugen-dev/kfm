@@ -1,0 +1,30 @@
+# Runs `rugen verify` on every push and pull request with the Linux release
+# of the engine. Fails when the character is BROKEN (does not load, crashes
+# or gets stuck in a headless match); WARN still passes.
+name: verify
+on: [push, pull_request, workflow_dispatch]
+env:
+  RUGEN_VERSION: "0.7.0"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install rugen
+        run: |
+          curl -sL "https://github.com/rugen-dev/rugen-engine/releases/download/v${RUGEN_VERSION}/rugen-${RUGEN_VERSION}-linux-x86_64.tar.gz" | tar -xz
+          mv "rugen-${RUGEN_VERSION}-linux-x86_64" "$RUNNER_TEMP/rugen"
+          mkdir -p "$RUNNER_TEMP/rugen/chars"
+      - name: Find the character folder
+        id: find
+        run: |
+          DEF=$(git ls-files '*.def' | grep -v -E '^(intro|ending)\.def$|/(intro|ending)\.def$' | grep -v '^screenshots/' | head -n1)
+          test -n "$DEF" || { echo "no .def file in the repository"; exit 1; }
+          DIR=$(dirname "$DEF")
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "character folder: $DIR ($DEF)"
+      - name: rugen verify
+        run: |
+          NAME=$(basename "$(cd "${{ steps.find.outputs.dir }}" && pwd)")
+          cp -r "${{ steps.find.outputs.dir }}" "$RUNNER_TEMP/rugen/chars/$NAME"
+          "$RUNNER_TEMP/rugen/rugen" verify "$NAME" --root "$RUNNER_TEMP/rugen"

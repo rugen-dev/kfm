@@ -1,0 +1,8 @@
+{
+  "kind": "fighter",
+  "name": "Kung Fu Man",
+  "author": "Elecbyte",
+  "style": "original",
+  "summary": "Elecbyte's example character: the reference fighter of the rugen docs and the fairness scale.",
+  "screenshots": ["screenshots/kfm-stance.png"]
+}
